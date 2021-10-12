@@ -17,38 +17,51 @@
     <div class="container mt-4">
         <div class="card">
             <div class="card-header text-center">
-                Estimation Prototype
+                Estimation
             </div>
             <div class="card-body">
+                @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
                 <form class="row" method="POST" action="{{ route('get.quote') }}">
                     {{ csrf_field() }}
                     <div class="col-4 mb-3">
                         <label for="vehicleRegNo" class="form-label">Vehicle Registration</label>
-                        <input type="text" class="form-control" id="vehicleRegNo" name="vehicle_reg_no">
+                        <input type="text" class="form-control" id="vehicleRegNo" name="vehicle_reg_no"
+                            value="{{ old('vehicle_reg_no') }}">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="vehicleEstimatedValue" class="form-label">Vehicle Estimated Value</label>
                         <input type="number" class="form-control" id="vehicleEstimatedValue"
-                            name="vehicle_estimated_value">
+                            name="vehicle_estimated_value" value="{{ old('vehicle_estimated_value') }}" min="1"
+                            max="25000">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="dob" class="form-label">DOB</label>
-                        <input type="date" class="form-control" id="dob" name="date_of_birth">
+                        <input type="date" class="form-control" id="dob" name="date_of_birth"
+                            value="{{ old('date_of_birth') }}">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="postcode" class="form-label">Postcode</label>
-                        <input type="text" class="form-control" id="postcode" name="postcode">
+                        <input type="text" class="form-control" id="postcode" name="postcode"
+                            value="{{ old('postcode') }}">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="voluntaryExcess" class="form-label">Voluntary Excess</label>
-                        <input type="number" class="form-control" id="voluntaryExcess" step="50"
-                            name="voluntary_excess">
+                        <input type="number" class="form-control" id="voluntaryExcess" step="50" name="voluntary_excess"
+                            value="{{ old('voluntary_excess') }}" min="0" max="1000">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="jobTitle" class="form-label">Job Title</label>
-                        <input class="form-control" list="datalistOptions" id="jobTitle" placeholder="Type to search..."
-                            name="job_title">
-                        <datalist id="datalistOptions">
+                        <input class="form-control" list="jobTitles" id="jobTitle" placeholder="Type to search..."
+                            name="job_title" value="{{ old('job_title') }}">
+                        <datalist id="jobTitles">
                             @foreach ($jobs as $job)
                                 <option value="{{ $job }}">
                             @endforeach
@@ -56,24 +69,26 @@
                     </div>
                     <div class="col-4 mb-3">
                         <label for="noClaimBonus" class="form-label">No Claim Bonus</label>
-                        <input type="number" class="form-control" id="noClaimBonus" name="no_claim_bonus">
+                        <input type="number" class="form-control" id="noClaimBonus" name="no_claim_bonus"
+                            value="{{ old('no_claim_bonus') }}" min="0" max="20">
                     </div>
                     <button type="submit" class="btn btn-primary">Get a quote</button>
                 </form>
             </div>
         </div>
-        @isset($estimates)
+        @if(session('estimates'))
         <div class="card">
             <div class="card-header text-center">
                 Estimates
             </div>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">An item</li>
-                <li class="list-group-item">A second item</li>
-                <li class="list-group-item">A third item</li>
+            <ul class="list-group list-group-flush text-center">
+                <li class="list-group-item">Cheapest Price:
+                    <strong>&pound;{{ session('estimates.prediction_min') }}</strong></li>
+                <li class="list-group-item">Average Price:
+                    <strong>&pound;{{ session('estimates.prediction_top5') }}</strong></li>
             </ul>
         </div>
-        @endisset
+        @endif
     </div>
 
     <!-- Optional JavaScript; choose one of the two! -->

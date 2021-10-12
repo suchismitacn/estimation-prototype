@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 
 class EstimationController extends Controller
@@ -22,33 +23,45 @@ class EstimationController extends Controller
         $this->version = config('app.env') === 'production' ? 'v1' : 'test';
     }
 
-    public function getAccessToken() {
-        $response = $this->client->request('POST', 'auth/login', [
-            'form_params' => [
-                'email' => 'dev.team@stoneacre.co.uk',
-                'password' => 'zlw5OwEZ'
-            ],
-        ]);
-        if ($response->getStatusCode() === 200) {
-            $result = json_decode($response->getBody()->getContents(), true);
-            return $result['status'] === 'success' ? $result['data']['access_token'] : null;
-        } else {
-            throw new \Exception('Unable to get access token');
+    public function getAccessToken()
+    {
+        try {
+            $response = $this->client->request('POST', 'auth/login', [
+                'form_params' => [
+                    'email' => 'dev.team@stoneacre.co.uk',
+                    'password' => 'zlw5OwEZ'
+                ],
+            ]);
+            if ($response->getStatusCode() === 200) {
+                $result = json_decode($response->getBody()->getContents(), true);
+                return $result['status'] === 'success' ? $result['data']['access_token'] : null;
+            } else {
+                return null;
+            }
+        } catch (GuzzleException $exception) {
+            \Log::error('Get access token error: ' . print_r($exception->getMessage(), true));
+            return abort($exception->getCode(), $exception->getMessage());
         }
     }
 
-    public function getJobTitles() {
-        $response = $this->client->request('POST', $this->version . '/partner/jobTitles', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->access_token,
-            ],
-            'form_params' => ['jobTitle' => '???'],
-        ]);
-        if ($response->getStatusCode() === 200) {
-            $result = json_decode($response->getBody()->getContents(), true);
-            return $result['status'] === 'success' ? $result['data'] : null;
-        } else {
-            return null;
+    public function getJobTitles()
+    {
+        try {
+            $response = $this->client->request('POST', $this->version . '/partner/jobTitles', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->access_token,
+                ],
+                'form_params' => ['jobTitle' => '???'],
+            ]);
+            if ($response->getStatusCode() === 200) {
+                $result = json_decode($response->getBody()->getContents(), true);
+                return $result['status'] === 'success' ? $result['data'] : null;
+            } else {
+                return null;
+            }
+        } catch (GuzzleException $exception) {
+            \Log::error('Get job titles error: ' . print_r($exception->getMessage(), true));
+            return abort($exception->getCode(), $exception->getMessage());
         }
     }
 
@@ -56,7 +69,7 @@ class EstimationController extends Controller
     {
         $jobs = $this->getJobTitles();
 
-        if ($jobs) {
+        if (is_array($jobs)) {
             return view('estimation')->with('jobs', $jobs);
         } else {
             throw new \Exception('Unable to get job titles');
@@ -66,15 +79,27 @@ class EstimationController extends Controller
     public function getEstimationQuote(Request $request)
     {
         \Log::info("Request " . print_r($request->all(), true));
-        $response = $this->client->request('POST', $this->version . '/estimator/car/predict', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->access_token,
-            ],
-            'form_params' => $request->except(['_token']),
-        ]);
-        $statusCode = $response->getStatusCode();
-        $result = json_decode($response->getBody()->getContents(), true);
-        \Log::info("Quote Response " . print_r($result, true));
-        return response()->json($result, $statusCode);
+        try {
+            $response = $this->client->request('POST', $this->version . '/estimator/car/predict', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->access_token,
+                ],
+                'form_params' => $request->except(['_token']),
+            ]);
+            $result = json_decode($response->getBody()->getContents(), true);
+            \Log::info("Quote Response " . print_r($result, true));
+
+            if ($response->getStatusCode() === 200) {
+                $request->session()->flash('estimates', $result['data']);
+                return back()->withInput();
+            } else {
+                throw new \Exception('Unable to get quote');
+            }
+        } catch (GuzzleException $exception) {
+            \Log::error('Get Estimation Error: ' . print_r($exception->getMessage(), true));
+            $response = $exception->getResponse();
+            $body = $response->getBody()->getContents();
+            return back()->withErrors($body)->withInput();
+        }
     }
 }
