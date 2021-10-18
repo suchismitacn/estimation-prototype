@@ -21,10 +21,8 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-danger d-none">
-                    <p></p>
-                    <!-- <ul> -->
-                        <!-- <li></li> -->
-                    <!-- </ul> -->
+                    <ul>
+                    </ul>
                 </div>
                 <form class="row" method="POST" action="{{ route('get.quote') }}" id="estimator-form">
                     {{ csrf_field() }}
@@ -114,7 +112,7 @@
                     beforeSend: function() {
                         btn.attr('disabled', true);
                         alert.addClass('d-none').removeClass('alert-danger').removeClass('d-block');
-                        alert.find('p').html('');
+                        alert.html('');
                     },
                     success: function(response) {
                         console.log(response);
@@ -125,7 +123,16 @@
                         console.log(response);
                         btn.attr('disabled', false);
                         alert.addClass('d-block').addClass('alert-danger').removeClass('d-none');
-                        alert.find('p').html(response.responseJSON.message);
+                        if (typeof response.responseJSON.data !== 'undefined') {
+                            var errors = response.responseJSON.data;
+                            if (errors.length !== 0) {
+                                for (var i = 0; i < errors.length; i++) {
+                                    alert.append('<p>' + errors[i] + '</p>');
+                                }
+                            }
+                        } else {
+                            alert.append('<p>' + response.responseJSON.message + '</p>');
+                        }
                     }
                 });
             });

@@ -102,10 +102,18 @@ class EstimationController extends Controller
         } catch (GuzzleException $exception) {
             \Log::error('Get Estimation Error: ' . print_r($exception->getMessage(), true));
             $response = $exception->getResponse();
+            $result = json_decode($response->getBody()->getContents(), true);
+
+            $errors = [];
+            if (isset($result['errors'])) {
+                foreach ($result['errors'] as $key => $value) {
+                    $errors[] = $value[0]['error'];
+                }
+            }
 
             return response()->json([
-                'success' => true,
-                'data' => json_decode($response->getBody()->getContents()),
+                'success' => false,
+                'data' => $errors,
                 'message' => $exception->getMessage()
             ], 500);
         }
