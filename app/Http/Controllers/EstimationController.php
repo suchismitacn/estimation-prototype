@@ -86,20 +86,28 @@ class EstimationController extends Controller
                 ],
                 'form_params' => $request->except(['_token']),
             ]);
+
             $result = json_decode($response->getBody()->getContents(), true);
+
             \Log::info("Quote Response " . print_r($result, true));
 
             if ($response->getStatusCode() === 200) {
-                $request->session()->flash('estimates', $result['data']);
-                return back()->withInput();
+                return response()->json([
+                    'success' => true,
+                    'data'    => $result['data'],
+                ], 200);
             } else {
                 throw new \Exception('Unable to get quote');
             }
         } catch (GuzzleException $exception) {
             \Log::error('Get Estimation Error: ' . print_r($exception->getMessage(), true));
             $response = $exception->getResponse();
-            $body = $response->getBody()->getContents();
-            return back()->withErrors($body)->withInput();
+
+            return response()->json([
+                'success' => true,
+                'data' => json_decode($response->getBody()->getContents()),
+                'message' => $exception->getMessage()
+            ], 500);
         }
     }
 }

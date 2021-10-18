@@ -20,16 +20,13 @@
                 Estimation
             </div>
             <div class="card-body">
-                @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                <div class="alert alert-danger d-none">
+                    <p></p>
+                    <!-- <ul> -->
+                        <!-- <li></li> -->
+                    <!-- </ul> -->
                 </div>
-                @endif
-                <form class="row" method="POST" action="{{ route('get.quote') }}">
+                <form class="row" method="POST" action="{{ route('get.quote') }}" id="estimator-form">
                     {{ csrf_field() }}
                     <div class="col-4 mb-3">
                         <label for="vehicleRegNo" class="form-label">Vehicle Registration</label>
@@ -92,10 +89,47 @@
     </div>
 
     <!-- Optional JavaScript; choose one of the two! -->
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <!-- Option 1: Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous">
+    </script>
+    <script type="text/javascript">
+        let estimator = $('#estimator-form');
+
+        $(function () {
+            formSubmit(estimator);
+        });
+
+        function formSubmit(form) {
+            form.on('submit', function(event){
+                event.preventDefault();
+                var btn = form.find('button[type="submit"]');
+                var alert = $('.alert');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: form.serialize(),
+                    beforeSend: function() {
+                        btn.attr('disabled', true);
+                        alert.addClass('d-none').removeClass('alert-danger').removeClass('d-block');
+                        alert.find('p').html('');
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        btn.attr('disabled', false);
+                        alert.addClass('d-block').addClass('alert-success').removeClass('d-none');
+                    },
+                    error: function(response) {
+                        console.log(response);
+                        btn.attr('disabled', false);
+                        alert.addClass('d-block').addClass('alert-danger').removeClass('d-none');
+                        alert.find('p').html(response.responseJSON.message);
+                    }
+                });
+            });
+        }
     </script>
 </body>
 
