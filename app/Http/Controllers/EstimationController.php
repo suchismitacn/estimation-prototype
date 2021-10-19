@@ -94,7 +94,10 @@ class EstimationController extends Controller
             if ($response->getStatusCode() === 200) {
                 return response()->json([
                     'success' => true,
-                    'data'    => $result['data'],
+                    'data'    => [
+                        'inputs'    => $request->except(['_token']),
+                        'estimate'  => $result['data']
+                    ],
                 ], 200);
             } else {
                 throw new \Exception('Unable to get quote');

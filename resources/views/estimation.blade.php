@@ -21,41 +21,39 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-danger d-none">
-                    <ul>
-                    </ul>
                 </div>
                 <form class="row" method="POST" action="{{ route('get.quote') }}" id="estimator-form">
                     {{ csrf_field() }}
                     <div class="col-4 mb-3">
                         <label for="vehicleRegNo" class="form-label">Vehicle Registration</label>
                         <input type="text" class="form-control" id="vehicleRegNo" name="vehicle_reg_no"
-                            value="{{ old('vehicle_reg_no') }}">
+                            value="">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="vehicleEstimatedValue" class="form-label">Vehicle Estimated Value</label>
                         <input type="number" class="form-control" id="vehicleEstimatedValue"
-                            name="vehicle_estimated_value" value="{{ old('vehicle_estimated_value') }}" min="1"
+                            name="vehicle_estimated_value" value="" min="1"
                             max="25000">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="dob" class="form-label">DOB</label>
                         <input type="date" class="form-control" id="dob" name="date_of_birth"
-                            value="{{ old('date_of_birth') }}">
+                            value="">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="postcode" class="form-label">Postcode</label>
-                        <input type="text" class="form-control" id="postcode" name="postcode"
-                            value="{{ old('postcode') }}">
+                        <input type="text" class="form-control" id="postcode_1" name="postcode"
+                            value="">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="voluntaryExcess" class="form-label">Voluntary Excess</label>
                         <input type="number" class="form-control" id="voluntaryExcess" step="50" name="voluntary_excess"
-                            value="{{ old('voluntary_excess') }}" min="0" max="1000">
+                            value="" min="0" max="1000">
                     </div>
                     <div class="col-4 mb-3">
                         <label for="jobTitle" class="form-label">Job Title</label>
                         <input class="form-control" list="jobTitles" id="jobTitle" placeholder="Type to search..."
-                            name="job_title" value="{{ old('job_title') }}">
+                            name="job_title" value="">
                         <datalist id="jobTitles">
                             @foreach ($jobs as $job)
                                 <option value="{{ $job }}">
@@ -65,25 +63,65 @@
                     <div class="col-4 mb-3">
                         <label for="noClaimBonus" class="form-label">No Claim Bonus</label>
                         <input type="number" class="form-control" id="noClaimBonus" name="no_claim_bonus"
-                            value="{{ old('no_claim_bonus') }}" min="0" max="20">
+                            value="" min="0" max="20">
                     </div>
                     <button type="submit" class="btn btn-primary">Get a quote</button>
                 </form>
             </div>
         </div>
-        @if(session('estimates'))
-        <div class="card">
-            <div class="card-header text-center">
-                Estimates
+
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        Data Sent
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <span id="vehicle_reg_no">Vehicle Registration: <strong></strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="vehicle_estimated_value">Vehicle Estimated Value: <strong></strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="date_of_birth">DOB: <strong></strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="postcode">Postcode: <strong></strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="voluntary_excess">Voluntary Excess: <strong></strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="job_title">Job Title: <strong></strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="no_claim_bonus">No Claim Bonus: <strong></strong></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <ul class="list-group list-group-flush text-center">
-                <li class="list-group-item">Cheapest Price:
-                    <strong>&pound;{{ session('estimates.prediction_min') }}</strong></li>
-                <li class="list-group-item">Average Price:
-                    <strong>&pound;{{ session('estimates.prediction_top5') }}</strong></li>
-            </ul>
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        Estimates
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <span id="prediction_min">Cheapest Price: <strong>&pound;</strong></span>
+                            </li>
+                            <li class="list-group-item">
+                                <span id="prediction_top5">Average Price: <strong>&pound;</strong> </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
-        @endif
+
     </div>
 
     <!-- Optional JavaScript; choose one of the two! -->
@@ -118,6 +156,25 @@
                         console.log(response);
                         btn.attr('disabled', false);
                         alert.addClass('d-block').addClass('alert-success').removeClass('d-none');
+                        alert.append('<p> Success </p>');
+
+                        if (typeof response.data.inputs !== 'undefined') {
+                            var inputs = response.data.inputs;
+                            if (inputs.length !== 0) {
+                                for (const [key, value] of Object.entries(inputs)) {
+                                    $('#' + key).find('strong').text(value);
+                                }
+                            }
+                        }
+
+                        if (typeof response.data.estimate !== 'undefined') {
+                            var estimate = response.data.estimate;
+                            if (estimate.length !== 0) {
+                                for (const [key, value] of Object.entries(estimate)) {
+                                    $('#' + key).find('strong').html('&pound' + value);
+                                }
+                            }
+                        }
                     },
                     error: function(response) {
                         console.log(response);
